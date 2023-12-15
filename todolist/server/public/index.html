@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulaire de Tâches</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="app.js"></script>
+</head>
+<body>
+
+    <h1>Ajouter une Tâche</h1>
+
+    <form id="task-form">
+        <label for="task-description">Description de la tâche:</label>
+        <input type="text" id="task-description" name="taskDescription" required>
+        <button type="submit">Ajouter</button>
+    </form>
+
+    <h1>Liste des Tâches</h1>
+
+    <ul id="task-list">
+        <!-- Les tâches seront ajoutées ici dynamiquement -->
+    </ul>
+    <button id=""load-more">Charger plus</button>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const taskForm = document.getElementById('task-form');
+            const taskList = document.getElementById('task-list');
+
+            taskForm.addEventListener('submit', async function (event) {
+                event.preventDefault();
+
+                const taskDescription = document.getElementById('task-description').value;
+
+                // Création d'un objet avec les données de la tâche
+                const taskData = {
+                    description: taskDescription,
+                };
+
+                try {
+                    // Envoi de la requête avec fetch
+                    const response = await fetch('/tasks', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(taskData),
+                    });
+
+                    if (response.ok) {
+                        console.log('Tâche ajoutée avec succès!');
+                        // Vous pouvez effectuer des actions supplémentaires après l'ajout de la tâche
+                        loadTasks(); // Charger à nouveau les tâches après l'ajout
+                    } else {
+                        console.error("Erreur lors de l'ajout de la tâche:", response.statusText);
+                    }
+                } catch (error) {
+                    console.error("Erreur lors de l'envoi de la requête:", error);
+                }
+            });
+
+            // Fonction pour créer un élément de liste de tâches
+            function createTaskElement(task) {
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `
+                    <span>${task.description}</span>
+                    <button class="delete-button" data-task-id="${task._id}">Supprimer</button>
+                    <button class="complete-button" data-task-id="${task._id}">Terminé</button>
+                `;
+                if (task.completed) {
+                    listItem.classList.add('completed');
+                }
+                return listItem;
+            }
+
+            // Fonction pour charger les tâches depuis le serveur
+            async function loadTasks() {
+                try {
+                    const response = await fetch('/tasks');
+                    if (!response.ok) {
+                        throw new Error('Échec de la récupération des tâches');
+                    }
+
+                    const tasks = await response.json();
+                    taskList.innerHTML = ''; // Effacer la liste actuelle
+
+                    // Ajouter chaque tâche à la liste
+                    tasks.forEach(function (task) {
+                        const taskElement = createTaskElement(task);
+                        taskList.appendChild(taskElement);
+                    });
+                } catch (error) {
+                    console.error('Erreur lors du chargement des tâches:', error);
+                }
+            }
+
+            // Charger les tâches initiales
+            loadTasks();
+
+            // Délégué d'événement pour supprimer la tâche
+            taskList.addEventListener('click', async (event) => {
+                if (event.target.classList.contains('delete-button')) {
+                    const taskId = event.target.dataset.taskId;
+
+                    try {
+                        const response = await fetch(`/tasks/${taskId}`, {
+                            method: 'DELETE',
+                        });
+
+                        if (response.ok) {
+                            console.log('Tâche supprimée avec succès!');
+                            // Vous pouvez effectuer des actions supplémentaires après la suppression de la tâche
+                            loadTasks(); // Charger à nouveau les tâches après la suppression
+                        } else {
+                            console.error("Erreur lors de la suppression de la tâche:", response.statusText);
+                        }
+                    } catch (error) {
+                        console.error("Erreur lors de l'envoi de la requête:", error);
+                    }
+                }
+            });
+
+            // Délégué d'événement pour marquer la tâche comme terminée
+            taskList.addEventListener('click', async (event) => {
+                if (event.target.classList.contains('complete-button')) {
+                    const taskId = event.target.dataset.taskId;
+
+                    try {
+                        const response = await fetch(`/tasks/${taskId}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ completed: true }),
+                        });
+
+                        if (response.ok) {
+                            console.log('Tâche marquée comme terminée avec succès!');
+                            // Vous pouvez effectuer des actions supplémentaires après avoir marqué la tâche comme terminée
+                            loadTasks(); // Charger à nouveau les tâches après la mise à jour
+                        } else {
+                            console.error("Erreur lors de la mise à jour de la tâche:", response.statusText);
+                        }
+                    } catch (error) {
+                        console.error("Erreur lors de l'envoi de la requête:", error);
+                    }
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

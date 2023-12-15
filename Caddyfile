@@ -1,0 +1,11 @@
+todo.exemple.localhost {
+  reverse_proxy localhost:3000
+  encode gzip
+  file_server
+}
+
+portfolio.exemple.localhost {
+  root * portfolio
+  encode gzip
+  file_server
+}
