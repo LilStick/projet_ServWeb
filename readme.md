@@ -1,7 +1,7 @@
 #Site statique portfolio et todolist 
 
 Bienvenue dans l'application portfolio /todolist. 
-
+ npm init
 #config requise 
 
 node.js 
